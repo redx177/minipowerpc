@@ -1,21 +1,22 @@
 package ch.zhaw.minipowerpc.cpu;
 
+import ch.zhaw.minipowerpc.Binary;
 import ch.zhaw.minipowerpc.storage.IStorable;
 
 public class Instruction implements IStorable {
-	private final int address;
+	private final Binary address;
 	private final String mnemonic;
-	private final String machineCode;
+	private final Binary machineCode;
 	private final String comment;
 
-	public Instruction(int address, String mnemonic, String machineCode, String comment) {
+	public Instruction(Binary address, String mnemonic, Binary machineCode, String comment) {
 		this.address = address;
 		this.mnemonic = mnemonic;
 		this.machineCode = machineCode;
 		this.comment = comment;
 	}
 
-	public int getAddress() {
+	public Binary getAddress() {
 		return address;
 	}
 
@@ -23,7 +24,7 @@ public class Instruction implements IStorable {
 		return mnemonic;
 	}
 
-	public String getMachineCode() {
+	public Binary getMachineCode() {
 		return machineCode;
 	}
 

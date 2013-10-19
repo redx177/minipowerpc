@@ -1,16 +1,23 @@
 package ch.zhaw.minipowerpc.cpu;
 
-public class Register<T> {
-	private T value;
+import ch.zhaw.minipowerpc.Binary;
 
-	public Register(T value) {
-		this.value = value;
+public class Register {
+	private Binary value;
+
+	public Register(Binary value) {
+		set(value);
 	}
 
 	public Register() {
+		set(new Binary(0));
 	}
 
-	public T get() {
+	public Binary get() {
 		return value;
+	}
+
+	public void set(Binary value) {
+		this.value = value;
 	}
 }

@@ -1,6 +1,8 @@
 package ch.zhaw.minipowerpc.compiler;
 
+import ch.zhaw.minipowerpc.Binary;
 import ch.zhaw.minipowerpc.cpu.Instruction;
+import ch.zhaw.minipowerpc.storage.Storage;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,9 +12,13 @@ import java.util.regex.Pattern;
 
 public class MnemonicsCompiler {
 
-	public ArrayList<Instruction> compile(ArrayList<String> mnemonicLines) throws MnemonicsCompilerException {
-		ArrayList<Instruction> instructions = new ArrayList<Instruction>();
+	private Storage storage;
 
+	public MnemonicsCompiler(Storage storage) {
+		this.storage = storage;
+	}
+
+	public void compile(ArrayList<String> mnemonicLines) throws MnemonicsCompilerException {
 		int line = 1;
 		for (String code : mnemonicLines) {
 
@@ -27,15 +33,14 @@ public class MnemonicsCompiler {
 			String options = m.group(4);
 			String comment = m.group(5);
 
-			int address = validateAddress(addressString, line);
-			String machineCode = validateOperationCode(operationCode, options, line);
+			Binary address = validateAddress(addressString, line);
+			String machineCodeString = validateOperationCode(operationCode, options, line);
+			Binary machineCode = new Binary(machineCodeString);
 
-			Instruction instruction = new Instruction(address, code, machineCode, comment);
-			instructions.add(instruction);
+			Instruction instruction = new Instruction(address, operationCode+" "+options, machineCode, comment);
+			storage.set(instruction.getAddress(), instruction);
 			line++;
 		}
-
-		return instructions;
 	}
 
 	private String validateOperationCode(String operationCode, String options, int line) throws MnemonicsCompilerException {
@@ -201,7 +206,7 @@ public class MnemonicsCompiler {
 		return String.format("%"+length+"s", s).replace(' ', '0');
 	}
 
-	private int validateAddress(String addressString, int line) throws MnemonicsCompilerException {
+	private Binary validateAddress(String addressString, int line) throws MnemonicsCompilerException {
 		int address = StringToInt(addressString, line);
 
 		if (address < 100 || address > 498) {
@@ -211,7 +216,7 @@ public class MnemonicsCompiler {
 			throw new MnemonicsCompilerException(String.format("Address [%d] is invalid. Only even addresses allowed on 2 byte system. @line %d", address, line));
 		}
 
-		return address;
+		return new Binary(address);
 	}
 
 	private int StringToInt(String addressString, int line) throws MnemonicsCompilerException {
