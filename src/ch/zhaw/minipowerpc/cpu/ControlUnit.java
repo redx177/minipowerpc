@@ -40,24 +40,35 @@ public class ControlUnit {
 	private boolean perform() throws InvalidInstructionException, StorageException {
 		Instruction instruction = instructionRegister.getInstruction();
 		Binary machineCode = instruction.getMachineCode();
+		String machineCodeBinary = machineCode.toBin();
 
 		// CLR, ADD, INC, DEC, SRA, SLA, SRL, SLL, AND, OR, NOT
-		if (machineCode.toBin().substring(0, 4).equals("0000")) {
-			String middle = machineCode.toBin().substring(6, 9);
+		if (machineCodeBinary.substring(0, 4).equals("0000")) {
+			String middle = machineCodeBinary.substring(6, 9);
 
-			if (middle == "101") {
+			if (middle.equals("101")) {
 				performClr();
 				return true;
 			}
 
-			if (middle == "111") {
+			if (middle.equals("111")) {
 				performAdd();
 				return true;
 			}
 		}
 
-		if (machineCode.toBin().substring(0, 3).equals("010")) {
+		if (machineCodeBinary.substring(0, 1).equals("1")) {
+			performAddd();
+			return true;
+		}
+
+		if (machineCodeBinary.substring(0, 3).equals("010")) {
 			performLwdd();
+			return true;
+		}
+
+		if (machineCodeBinary.substring(0, 3).equals("011")) {
+			performSwdd();
 			return true;
 		}
 
@@ -67,7 +78,7 @@ public class ControlUnit {
 
 		throw new InvalidInstructionException(
 				String.format("Unrecognized instruction. MachineCode: [%s] Mnemonic: [%s] Address: [%s]",
-						machineCode.toBin(),
+						machineCodeBinary,
 						instruction.getMnemonic(),
 						instruction.getAddress().toInt()));
 	}
@@ -81,6 +92,12 @@ public class ControlUnit {
 		alu.Add(getCurrentRegister().get());
 	}
 
+	private void performAddd() throws InvalidInstructionException {
+		Instruction instruction = instructionRegister.getInstruction();
+		Binary summand = new Binary(instruction.getMachineCode().toBin().substring(1));
+		alu.Add(summand);
+	}
+
 	private void performLwdd() throws InvalidInstructionException, StorageException {
 		Register register = getCurrentRegister();
 		Instruction instruction = instructionRegister.getInstruction();
@@ -89,9 +106,16 @@ public class ControlUnit {
 		register.set(value);
 	}
 
+	private void performSwdd() throws InvalidInstructionException, StorageException {
+		Register register = getCurrentRegister();
+		Instruction instruction = instructionRegister.getInstruction();
+		Binary address = new Binary(instruction.getMachineCode().toBin().substring(6));
+		storage.set(address, register.get());
+	}
+
 	private Register getCurrentRegister() throws InvalidInstructionException {
 		Instruction instruction = instructionRegister.getInstruction();
-		String registerName = instruction.getMachineCode().toBin().substring(5, 7);
+		String registerName = instruction.getMachineCode().toBin().substring(4, 6);
 		if (registerName.equals("00")) return accu;
 		if (registerName.equals("01")) return register1;
 		if (registerName.equals("10")) return register2;

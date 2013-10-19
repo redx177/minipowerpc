@@ -3,7 +3,6 @@ package ch.zhaw.minipowerpc;
 import ch.zhaw.minipowerpc.compiler.MnemonicsCompiler;
 import ch.zhaw.minipowerpc.compiler.MnemonicsCompilerException;
 import ch.zhaw.minipowerpc.cpu.*;
-import ch.zhaw.minipowerpc.storage.IStorable;
 import ch.zhaw.minipowerpc.storage.Storage;
 import ch.zhaw.minipowerpc.storage.StorageException;
 
@@ -13,7 +12,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ListIterator;
 
 public class Main {
 
@@ -48,92 +46,24 @@ public class Main {
 	private static void run(Storage storage) throws InvalidInstructionException, StorageException {
 		ControlUnit controlUnit = new ControlUnit(storage);
 
+
 		while (controlUnit.nextCycle()) {
 
-			System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n");
 			InstructionRegister instructionRegister = controlUnit.getInstructionRegister();
-
-
-			System.out.printf("╔════════════════════╤═════════╤════════════╗%n");
+			Instruction instruction = instructionRegister.getInstruction();
+			Binary address = instruction.getAddress();
+			LinkedList<Instruction> history = instructionRegister.getHistory();
 
 			Alu alu = controlUnit.getAlu();
 			Binary accu = alu.getAccu().get();
-			System.out.printf("║ Befehlsregister: %16s│ Akku: %d (%s)  │ Carry: %d %9s ║%n",
-					" ",
-					accu.toInt(), accu.toBin(),
-					(alu.getCarry() ? 1 : 0),
-					" ");
-
-			Instruction instruction = instructionRegister.getInstruction();
-			Binary address = instruction.getAddress();
 			Binary reg1 = controlUnit.getRegister1().get();
 			Binary reg2 = controlUnit.getRegister2().get();
 			Binary reg3 = controlUnit.getRegister3().get();
-			System.out.printf("║  - Address: %d (%10s) %4s│ REG1: %d (%s) %3s│ Befehlszähler: %d ║%n",
-					address.toInt(), address.toBin(),
-					" ",
-					reg1.toInt(), reg1.toBin(),
-					" ",
-					controlUnit.getInstructionCounter().get().toInt());
-			System.out.printf("║  - MachineCode: %s │ REG2: %d (%s) %3s│ %18s ║%n",
-					instruction.getMachineCode().toBin(),
-					reg2.toInt(), reg3.toBin(),
-					" ",
-					" ");
-			System.out.printf("║  - Mnemonic: %s %7s│ REG3: %d (%s) %3s│ %18s ║%n",
-					instruction.getMnemonic(),
-					" ",
-					reg2.toInt(), reg3.toBin(),
-					" ",
-					" ");
-			System.out.printf("╚════════════════════╧═════════╧════════════╝%n");
 
-			System.out.printf("Instructions: %18s Storage:%n", " ");
 
-			LinkedList<Instruction> history = instructionRegister.getHistory();
-			int c = history.size();
-			int i = 1;
-			int empty = 0;
-			List<String> instructionList = new ArrayList<String>();
-			for (i = 0; i < 5; i++) {
-				String s;
-				if (5-c <= i) {
-					Instruction pastInstruction = history.get(i - empty);
-					s = pastInstruction.getMnemonic();
-				} else {
-					s = "";
-					empty++;
-				}
-				instructionList.add(String.format(" %d %s", i - 5, s));
-			}
-
-			for (i = 1; i < instructionPredictionCount + 1; i++) {
-				String s;
-				try {
-					Instruction futureInstruction = (Instruction) storage.get(address.toInt() + i * 2);
-					s = futureInstruction.getMnemonic();
-				} catch (StorageException e) {
-					s = "";
-				}
-				instructionList.add(String.format(" %2d %s", i-1, s));
-			}
-
-			List<String> storageList = new ArrayList<String>();
-			for (i = 0; i < storageDisplayCount; i++) {
-				int intAddress = storageOffset + 2 * i;
-				Binary stored;
-				try {
-					stored = (Binary)storage.get(intAddress);
-				} catch (StorageException e) {
-					stored = new Binary(0);
-				}
-				storageList.add(String.format("%d %5d %s", intAddress, stored.toInt(), stored.toBin()));
-			}
-
-			for (i = 0; i < 15; i++) {
-				System.out.printf(" %s            %s%n", padRight(instructionList.get(i)), storageList.get(i));
-			}
-
+			System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n");
+			printHeader(controlUnit, instruction, address, alu, accu, reg1, reg2, reg3);
+			printInstructionsAndStorage(storage, address, history);
 			try {
 				System.in.read();
 			} catch (IOException e) {
@@ -142,9 +72,88 @@ public class Main {
 		}
 	}
 
-	private static String padRight(String s) {
+	private static void printInstructionsAndStorage(Storage storage, Binary currentInstructionAddress,
+	                                                LinkedList<Instruction> history) {
+
+		System.out.printf("Instructions: %38s Storage:%n", " ");
+
+		int c = history.size();
+		int i = 1;
+		int empty = 0;
+		List<String> instructionList = new ArrayList<String>();
+		for (i = 0; i < 5; i++) {
+			String mnemonic;
+			String machineCode;
+			if (5-c <= i) {
+				Instruction instruction = history.get(i - empty);
+				mnemonic = instruction.getMnemonic();
+				machineCode = instruction.getMachineCode().toBin();
+			} else {
+				mnemonic = "";
+				machineCode = "";
+				empty++;
+			}
+			instructionList.add(String.format(" %d %s %s", i - 5, padRight(mnemonic, 15), machineCode));
+		}
+
+		for (i = 1; i < instructionPredictionCount + 1; i++) {
+			String mnemonic;
+			String machineCode;
+			try {
+				Instruction instruction = (Instruction) storage.get(currentInstructionAddress.toInt() + i * 2);
+				mnemonic = instruction.getMnemonic();
+				machineCode = instruction.getMachineCode().toBin();
+			} catch (StorageException e) {
+				mnemonic = "";
+				machineCode = "";
+			}
+			instructionList.add(String.format(" %2d %s %s", i-1, padRight(mnemonic, 15), machineCode));
+		}
+
+		List<String> storageList = new ArrayList<String>();
+		for (i = 0; i < storageDisplayCount; i++) {
+			int address = storageOffset + 2 * i;
+			Binary value;
+			try {
+				value = (Binary)storage.get(address);
+			} catch (StorageException e) {
+				value = new Binary(0);
+			}
+			storageList.add(String.format("%d %5d (%s)", address, value.toInt(), value.toBin()));
+		}
+
+		for (i = 0; i < 15; i++) {
+			System.out.printf(" %s %10s %s%n", padRight(instructionList.get(i), 40), " ", storageList.get(i));
+		}
+	}
+
+	private static void printHeader(ControlUnit controlUnit, Instruction instruction, Binary address,
+	                                Alu alu, Binary accu, Binary reg1, Binary reg2, Binary reg3) {
+		System.out.printf("╔════════════════════╤═════════════╤═════════════╗%n");
+		System.out.printf("║ Befehlsregister: %16s│ Akku: %5d %s│ Carry: %d %10s ║%n",
+				" ",
+				accu.toInt(), padRight("("+accu.toBin()+")",10),
+				(alu.getCarry() ? 1 : 0),
+				" ");
+
+		System.out.printf("║  - Address: %d %s│ REG1: %5d %s│ Befehlszähler: %d  ║%n",
+				address.toInt(), padRight("("+address.toBin()+")", 17),
+				reg1.toInt(), padRight("("+reg1.toBin()+")", 10),
+				controlUnit.getInstructionCounter().get().toInt());
+		System.out.printf("║  - MachineCode: %s │ REG2: %5d %s│ %19s ║%n",
+				instruction.getMachineCode().toBin(),
+				reg2.toInt(), padRight("("+reg2.toBin()+")", 10),
+				" ");
+		System.out.printf("║  - Mnemonic: %s│ REG3: %5d %s│ %19s ║%n",
+				padRight(instruction.getMnemonic(), 20),
+				reg3.toInt(), padRight("("+reg3.toBin()+")", 10),
+				" ");
+		System.out.printf("╚════════════════════╧═════════════╧═════════════╝%n");
+	}
+
+	private static String padRight(String s, int length) {
 		StringBuilder sb = new StringBuilder(s);
-		for (int i=0; i < 20-s.length(); i++) {
+		for (int i=0; i < length -s.length(); i++) {
 			sb.append(" ");
 		}
 
