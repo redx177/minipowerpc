@@ -57,4 +57,16 @@ public class Alu {
 
 		accu.set(new Binary(binary.substring(1) + "0"));
 	}
+
+	public void And(Binary binary) {
+		accu.set(new Binary(accu.get().toInt() & binary.toInt()));
+	}
+
+	public void Or(Binary binary) {
+		accu.set(new Binary(accu.get().toInt() | binary.toInt()));
+	}
+
+	public void Not() {
+		accu.set(new Binary(~accu.get().toInt()));
+	}
 }

@@ -55,6 +55,16 @@ public class ControlUnit {
 				performAdd();
 				return true;
 			}
+
+			if (middle.equals("100")) {
+				performAnd();
+				return true;
+			}
+
+			if (middle.equals("110")) {
+				performOr();
+				return true;
+			}
 		}
 
 		String tempMachineCodeBinary = machineCodeBinary.substring(0, 8);
@@ -101,6 +111,11 @@ public class ControlUnit {
 
 		if (tempMachineCodeBinary.equals("011")) {
 			performSwdd();
+			return true;
+		}
+
+		if (machineCodeBinary.substring(0, 9).equals("000000001")) {
+			alu.Not();
 			return true;
 		}
 
@@ -152,6 +167,14 @@ public class ControlUnit {
 		Instruction instruction = instructionRegister.getInstruction();
 		Binary address = new Binary(instruction.getMachineCode().toBin().substring(6));
 		storage.set(address, register.get());
+	}
+
+	private void performAnd() throws InvalidInstructionException {
+		alu.And(getCurrentRegister().get());
+	}
+
+	private void performOr() throws InvalidInstructionException {
+		alu.Or(getCurrentRegister().get());
 	}
 
 	private Register getCurrentRegister() throws InvalidInstructionException {
