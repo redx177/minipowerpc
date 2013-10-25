@@ -21,6 +21,7 @@ public class MnemonicsCompiler {
 	public void compile(ArrayList<String> mnemonicLines) throws MnemonicsCompilerException {
 		int line = 1;
 		for (String code : mnemonicLines) {
+			if (code.trim().substring(0,1).equals(";")) continue;
 
 			Pattern p = Pattern.compile("^(\\d{3})\\s+(\\w{1,4})(\\s+(.*?))?(\\s*;.*)?$");
 			Matcher m = p.matcher(code);
@@ -170,6 +171,7 @@ public class MnemonicsCompiler {
 	}
 
 	private int StringNumberToInt(String option, int line) throws MnemonicsCompilerException {
+		option = option.trim();
 		if (!option.substring(0, 1).equals("#")) {
 			throw new MnemonicsCompilerException(String.format("Number [%s] is invalid. Needs to start with a # @line %d", option, line));
 		}
@@ -198,6 +200,7 @@ public class MnemonicsCompiler {
 	}
 
 	private String validateOptionAsRegister(String option, int line) throws MnemonicsCompilerException {
+		option = option.trim();
 		Pattern p = Pattern.compile("^(r|R)([0-3])$");
 		Matcher m = p.matcher(option);
 
