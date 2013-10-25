@@ -37,7 +37,8 @@ public class MnemonicsCompiler {
 			String machineCodeString = validateOperationCode(operationCode, options, line);
 			Binary machineCode = new Binary(machineCodeString);
 
-			Instruction instruction = new Instruction(address, operationCode+" "+options, machineCode, comment);
+			options = options != null && !options.equals("") ? " " + options : "";
+			Instruction instruction = new Instruction(address, operationCode + options, machineCode, comment);
 			storage.set(instruction.getAddress(), instruction);
 			line++;
 		}
@@ -169,7 +170,7 @@ public class MnemonicsCompiler {
 	}
 
 	private int StringNumberToInt(String option, int line) throws MnemonicsCompilerException {
-		if (!option.substring(0,1).equals("#")) {
+		if (!option.substring(0, 1).equals("#")) {
 			throw new MnemonicsCompilerException(String.format("Number [%s] is invalid. Needs to start with a # @line %d", option, line));
 		}
 		option = option.substring(1);
@@ -184,7 +185,16 @@ public class MnemonicsCompiler {
 			throw new MnemonicsCompilerException(String.format("Number [%d] is out of range. Valid values are x < 32767", number));
 		}
 
-		return intToBinaryString(number, 15);
+		if (number >= 0) {
+			return intToBinaryString(number, 15);
+		}
+
+		return TwosComplement(number, 15);
+	}
+
+	private String TwosComplement(int number, int length) {
+		String binaryString = intToBinaryString(number, length);
+		return binaryString;
 	}
 
 	private String validateOptionAsRegister(String option, int line) throws MnemonicsCompilerException {
@@ -199,11 +209,13 @@ public class MnemonicsCompiler {
 		return intToBinaryString(Integer.parseInt(register), 2);
 	}
 
-	private String intToBinaryString(int register, int length) {
+	private String intToBinaryString(int number, int length) {
 		// To binary.
-		String s = Integer.toBinaryString(register);
-		// Pad with zeros.
-		return String.format("%"+length+"s", s).replace(' ', '0');
+		String s = Integer.toBinaryString(number);
+		// Pad with zeros if number is to short.
+		s = String.format("%" + length + "s", s).replace(' ', '0');
+		// If number was to long, trim it.
+		return s.substring(s.length()-length);
 	}
 
 	private Binary validateAddress(String addressString, int line) throws MnemonicsCompilerException {

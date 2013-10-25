@@ -42,7 +42,7 @@ public class ControlUnit {
 		Binary machineCode = instruction.getMachineCode();
 		String machineCodeBinary = machineCode.toBin();
 
-		// CLR, ADD, INC, DEC, SRA, SLA, SRL, SLL, AND, OR, NOT
+		// CLR, ADD, AND, OR
 		if (machineCodeBinary.substring(0, 4).equals("0000")) {
 			String middle = machineCodeBinary.substring(6, 9);
 
@@ -57,22 +57,54 @@ public class ControlUnit {
 			}
 		}
 
+		String tempMachineCodeBinary = machineCodeBinary.substring(0, 8);
+		if (tempMachineCodeBinary.equals("00000001")) {
+			performInc();
+			return true;
+		}
+
+		if (tempMachineCodeBinary.equals("00000100")) {
+			performDec();
+			return true;
+		}
+
+		if (tempMachineCodeBinary.equals("00000101")) {
+			alu.Sra();
+			return true;
+		}
+
+		if (tempMachineCodeBinary.equals("00001000")) {
+			alu.Sla();
+			return true;
+		}
+
+		if (tempMachineCodeBinary.equals("00001001")) {
+			alu.Srl();
+			return true;
+		}
+
+		if (tempMachineCodeBinary.equals("00001100")) {
+			alu.Sll();
+			return true;
+		}
+
 		if (machineCodeBinary.substring(0, 1).equals("1")) {
 			performAddd();
 			return true;
 		}
 
-		if (machineCodeBinary.substring(0, 3).equals("010")) {
+		tempMachineCodeBinary = machineCodeBinary.substring(0, 3);
+		if (tempMachineCodeBinary.equals("010")) {
 			performLwdd();
 			return true;
 		}
 
-		if (machineCodeBinary.substring(0, 3).equals("011")) {
+		if (tempMachineCodeBinary.equals("011")) {
 			performSwdd();
 			return true;
 		}
 
-		if (machineCode.equals("0000000000000000")) {
+		if (machineCodeBinary.equals("0000000000000000")) {
 			return false;
 		}
 
@@ -83,9 +115,17 @@ public class ControlUnit {
 						instruction.getAddress().toInt()));
 	}
 
+	private void performInc() {
+		alu.Add(new Binary(1));
+	}
+
+	private void performDec() {
+		alu.Add(new Binary(-1));
+	}
+
 	private void performClr() throws InvalidInstructionException {
-		getCurrentRegister().set(new Binary("0000000000000000"));
-		alu.setCarry(false);
+		getCurrentRegister().set(new Binary("0"));
+		alu.unsetCarry();
 	}
 
 	private void performAdd() throws InvalidInstructionException {
@@ -94,7 +134,8 @@ public class ControlUnit {
 
 	private void performAddd() throws InvalidInstructionException {
 		Instruction instruction = instructionRegister.getInstruction();
-		Binary summand = new Binary(instruction.getMachineCode().toBin().substring(1));
+		String binary = instruction.getMachineCode().toBin().substring(1);
+		Binary summand = new Binary((isPositive(binary) ? "0" : "1") + binary);
 		alu.Add(summand);
 	}
 
@@ -124,6 +165,11 @@ public class ControlUnit {
 		throw new InvalidInstructionException(
 				String.format("Register %s is invalid @address %d",
 						registerName, instruction.getAddress()));
+	}
+
+	private boolean isPositive(String binary) {
+		if (binary.length() < 15) return true;
+		return binary.substring(0, 1).equals("0");
 	}
 
 	private Instruction loadInstructionFromStorage(Binary address) throws InvalidInstructionException, StorageException {

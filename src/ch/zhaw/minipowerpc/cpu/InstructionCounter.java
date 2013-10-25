@@ -3,21 +3,21 @@ package ch.zhaw.minipowerpc.cpu;
 import ch.zhaw.minipowerpc.Binary;
 
 public class InstructionCounter {
-	private Register register;
+	private Binary address;
 	public InstructionCounter() {
-		register = new Register(new Binary(100));
+		address = new Binary(100);
 	}
 
 	public Binary get() {
-		return register.get();
+		return address;
 	}
 
 	public void increment() {
-		Binary newAddress = new Binary(register.get().toInt() + 2);
-		register.set(newAddress);
+		Binary newAddress = new Binary(address.toInt() + 2);
+		address = newAddress;
 	}
 
 	public void jumpTo(Binary address) {
-		register.set(address);
+		this.address = address;
 	}
 }

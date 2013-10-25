@@ -8,12 +8,15 @@ public class Binary implements IStorable {
 
 	public Binary(String binary) {
 		this.binary = binary;
-		integer = Integer.parseInt(binary, 2);
+		integer = (short)Integer.parseInt(binary, 2);
 	}
 
 	public Binary(int integer) {
 		this.integer = integer;
 		binary = Integer.toBinaryString(integer);
+		if (binary.length() > 16) {
+			binary = binary.substring(binary.length()-16);
+		}
 	}
 
 	public String toBin() {

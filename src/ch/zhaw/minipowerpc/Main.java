@@ -15,7 +15,9 @@ import java.util.List;
 
 public class Main {
 
+	//private static final String fileName = "D:\\Git\\minipowerpc\\examples\\CompilerTest.slang";
 	private static final String fileName = "D:\\Git\\minipowerpc\\examples\\MathExample.slang";
+	//private static final String fileName = "D:\\Git\\minipowerpc\\examples\\Serie3.slang";
 	private static final int instructionPredictionCount = 10;
 	private static final int storageDisplayCount = 15;
 	private static final int storageOffset = 500;
@@ -46,7 +48,7 @@ public class Main {
 	private static void run(Storage storage) throws InvalidInstructionException, StorageException {
 		ControlUnit controlUnit = new ControlUnit(storage);
 
-
+		int cycleCount = 0;
 		while (controlUnit.nextCycle()) {
 
 			InstructionRegister instructionRegister = controlUnit.getInstructionRegister();
@@ -62,13 +64,14 @@ public class Main {
 
 
 			System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n");
-			printHeader(controlUnit, instruction, address, alu, accu, reg1, reg2, reg3);
+			printHeader(controlUnit, instruction, address, alu, accu, reg1, reg2, reg3, cycleCount);
 			printInstructionsAndStorage(storage, address, history);
 			try {
 				System.in.read();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			cycleCount++;
 		}
 	}
 
@@ -82,32 +85,38 @@ public class Main {
 		int empty = 0;
 		List<String> instructionList = new ArrayList<String>();
 		for (i = 0; i < 5; i++) {
+			int address;
 			String mnemonic;
 			String machineCode;
 			if (5-c <= i) {
 				Instruction instruction = history.get(i - empty);
+				address = instruction.getAddress().toInt();
 				mnemonic = instruction.getMnemonic();
 				machineCode = instruction.getMachineCode().toBin();
 			} else {
+				address = 0;
 				mnemonic = "";
 				machineCode = "";
 				empty++;
 			}
-			instructionList.add(String.format(" %d %s %s", i - 5, padRight(mnemonic, 15), machineCode));
+			instructionList.add(String.format(" %d %3d %s %s", i - 5, address, padRight(mnemonic, 15), machineCode));
 		}
 
 		for (i = 1; i < instructionPredictionCount + 1; i++) {
+			int address;
 			String mnemonic;
 			String machineCode;
 			try {
 				Instruction instruction = (Instruction) storage.get(currentInstructionAddress.toInt() + i * 2);
+				address = instruction.getAddress().toInt();
 				mnemonic = instruction.getMnemonic();
 				machineCode = instruction.getMachineCode().toBin();
 			} catch (StorageException e) {
+				address = 0;
 				mnemonic = "";
 				machineCode = "";
 			}
-			instructionList.add(String.format(" %2d %s %s", i-1, padRight(mnemonic, 15), machineCode));
+			instructionList.add(String.format(" %2d %3d %s %s", i-1, address, padRight(mnemonic, 15), machineCode));
 		}
 
 		List<String> storageList = new ArrayList<String>();
@@ -128,27 +137,27 @@ public class Main {
 	}
 
 	private static void printHeader(ControlUnit controlUnit, Instruction instruction, Binary address,
-	                                Alu alu, Binary accu, Binary reg1, Binary reg2, Binary reg3) {
-		System.out.printf("╔════════════════════╤═════════════╤═════════════╗%n");
-		System.out.printf("║ Befehlsregister: %16s│ Akku: %5d %s│ Carry: %d %10s ║%n",
+	                                Alu alu, Binary accu, Binary reg1, Binary reg2, Binary reg3, int cycleCount) {
+		System.out.printf("╔════════════════════╤═══════════════════╤═════════════════╗%n");
+		System.out.printf("║ Befehlsregister: %16s│ Akku: %6d %s │ Carry: %d %18s ║%n",
 				" ",
-				accu.toInt(), padRight("("+accu.toBin()+")",10),
-				(alu.getCarry() ? 1 : 0),
+				accu.toInt(), padRight("(" + accu.toBin() + ")", 18),
+				alu.getCarry(),
 				" ");
-
-		System.out.printf("║  - Address: %d %s│ REG1: %5d %s│ Befehlszähler: %d  ║%n",
+		System.out.printf("║  - Address: %d %s│ REG1: %6d %s │ Befehlszähler: %d %8s ║%n",
 				address.toInt(), padRight("("+address.toBin()+")", 17),
-				reg1.toInt(), padRight("("+reg1.toBin()+")", 10),
-				controlUnit.getInstructionCounter().get().toInt());
-		System.out.printf("║  - MachineCode: %s │ REG2: %5d %s│ %19s ║%n",
+				reg1.toInt(), padRight("(" + reg1.toBin() + ")", 18),
+				controlUnit.getInstructionCounter().get().toInt(),
+				" ");
+		System.out.printf("║  - MachineCode: %s │ REG2: %6d %s │ Durchgeführte Befehle: %3d  ║%n",
 				instruction.getMachineCode().toBin(),
-				reg2.toInt(), padRight("("+reg2.toBin()+")", 10),
-				" ");
-		System.out.printf("║  - Mnemonic: %s│ REG3: %5d %s│ %19s ║%n",
+				reg2.toInt(), padRight("(" + reg2.toBin() + ")", 18),
+				cycleCount);
+		System.out.printf("║  - Mnemonic: %s│ REG3: %6d %s │ %27s ║%n",
 				padRight(instruction.getMnemonic(), 20),
-				reg3.toInt(), padRight("("+reg3.toBin()+")", 10),
+				reg3.toInt(), padRight("("+reg3.toBin()+")", 18),
 				" ");
-		System.out.printf("╚════════════════════╧═════════════╧═════════════╝%n");
+		System.out.printf("╚════════════════════╧═══════════════════╧═════════════════╝%n");
 	}
 
 	private static String padRight(String s, int length) {
