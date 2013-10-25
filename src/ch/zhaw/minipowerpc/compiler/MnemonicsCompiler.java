@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 public class MnemonicsCompiler {
 
 	private Storage storage;
+	private List<Instruction> instructions = new ArrayList<Instruction>();
 
 	public MnemonicsCompiler(Storage storage) {
 		this.storage = storage;
@@ -41,8 +42,13 @@ public class MnemonicsCompiler {
 			options = options != null && !options.equals("") ? " " + options : "";
 			Instruction instruction = new Instruction(address, operationCode + options, machineCode, comment);
 			storage.set(instruction.getAddress(), instruction);
+			instructions.add(instruction);
 			line++;
 		}
+	}
+
+	public List<Instruction> getInstructions() {
+		return instructions;
 	}
 
 	private String validateOperationCode(String operationCode, String options, int line) throws MnemonicsCompilerException {
