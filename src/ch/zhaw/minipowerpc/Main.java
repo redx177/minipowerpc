@@ -9,9 +9,11 @@ import ch.zhaw.minipowerpc.storage.StorageException;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
 
 public class Main {
 
@@ -27,7 +29,7 @@ public class Main {
 	public static void main(String[] args) {
 		Storage storage = new Storage();
 
-		System.out.println("----------------------------");
+		System.out.printf("%n%n%n----------------------------%n");
 		System.out.println("Mini-Power-PC by Simon Lang.");
 		System.out.println("----------------------------");
 
@@ -55,12 +57,15 @@ public class Main {
 
 	private static char getMode() {
 		System.out.printf("Select mode [f]ast, [s]low, s[t]ep: ");
+
+		char mode = new Scanner(System.in).next().charAt(0);
+		/*
 		char mode;
 		try {
 			mode = (char) System.in.read();
 		} catch (IOException e) {
 			return defaultMode;
-		}
+		}*/
 
 		if (mode == 'f' || mode == 's' || mode == 't') {
 			return mode;
@@ -109,19 +114,23 @@ public class Main {
 			Binary reg3 = controlUnit.getRegister3().get();
 
 			System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n");
-			printHeader(controlUnit, instructionRegister.getInstruction(), address, alu, accu, reg1, reg2, reg3, cycleCount);
+			printHeader(controlUnit, instructionRegister.getInstruction(), address, alu,
+					accu, reg1, reg2, reg3, cycleCount);
 			printInstructionsAndStorage(storage, controlUnit.getInstructionCounter().get(), history);
 		}
 	}
 
 	private static void waitIfRequired(char mode) {
 		if (mode == 't') {
+			new Scanner(System.in).nextLine();
+			/*
 			try {
 				System.in.read();
 				return;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			*/
 		}
 		if (mode == 's') {
 			try {
@@ -187,7 +196,10 @@ public class Main {
 			} catch (StorageException e) {
 				value = new Binary(0);
 			}
-			storageList.add(String.format("%d %5d (%s)", address, value.toInt(), value.toBin()));
+			storageList.add(String.format("%d %5d (%s)",
+					address,
+					value.toInt(),
+					(value.toInt() == 0 ? 0 : value.toBin())));
 		}
 		storageList.add("");
 
@@ -198,14 +210,15 @@ public class Main {
 
 	private static void printHeader(ControlUnit controlUnit, Instruction instruction, Binary address,
 	                                Alu alu, Binary accu, Binary reg1, Binary reg2, Binary reg3, int cycleCount) {
-		System.out.printf("╔════════════════════╤═══════════════════╤═════════════════╗%n");
+		System.out.printf("╔════════════════════╤═══════════════════╤═════════" +
+				"════════╗%n");
 		System.out.printf("║ Befehlsregister: %16s│ Akku: %6d %s │ Carry: %d %18s ║%n",
 				" ",
 				accu.toInt(), padRight("(" + accu.toBin() + ")", 18),
 				alu.getCarry(),
 				" ");
 		System.out.printf("║  - Address: %d %s│ REG1: %6d %s │ Befehlszähler: %d %8s ║%n",
-				address.toInt(), padRight("(" + address.toBin() + ")", 17),
+				address.toInt(), padRight("(" + address.toBinShort() + ")", 17),
 				reg1.toInt(), padRight("(" + reg1.toBin() + ")", 18),
 				controlUnit.getInstructionCounter().get().toInt(),
 				" ");
@@ -217,7 +230,8 @@ public class Main {
 				padRight(instruction.getMnemonic(), 20),
 				reg3.toInt(), padRight("(" + reg3.toBin() + ")", 18),
 				" ");
-		System.out.printf("╚════════════════════╧═══════════════════╧═════════════════╝%n");
+		System.out.printf("╚════════════════════╧═══════════════════╧════════" +
+				"═════════╝%n");
 	}
 
 	private static String padRight(String s, int length) {
@@ -234,8 +248,11 @@ public class Main {
 		mnemonicsCompiler.compile(loadFile(fileName));
 
 		/*
-	    for (Instruction instruction : mnemonicsCompiler.getInstructions()) {
-		    System.out.printf("%d %s   =>   %s%n", instruction.getAddress().toInt(), padRight(instruction.getMnemonic(), 15), instruction.getMachineCode().toBin());
+		for (Instruction instruction : mnemonicsCompiler.getInstructions()) {
+		    System.out.printf("%d %s   =>   %s%n",
+				    instruction.getAddress().toInt(),
+				    padRight(instruction.getMnemonic(), 15),
+				    instruction.getMachineCode().toBin());
 	    }
 		try {
 			System.in.read();
