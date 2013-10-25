@@ -65,7 +65,7 @@ public class Main {
 
 			System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n");
 			printHeader(controlUnit, instruction, address, alu, accu, reg1, reg2, reg3, cycleCount);
-			printInstructionsAndStorage(storage, address, history);
+			printInstructionsAndStorage(storage, controlUnit.getInstructionCounter().get(), history);
 			try {
 				System.in.read();
 			} catch (IOException e) {
@@ -75,7 +75,7 @@ public class Main {
 		}
 	}
 
-	private static void printInstructionsAndStorage(Storage storage, Binary currentInstructionAddress,
+	private static void printInstructionsAndStorage(Storage storage, Binary nextInstructionAddress,
 	                                                LinkedList<Instruction> history) {
 
 		System.out.printf("Instructions: %38s Storage:%n", " ");
@@ -102,17 +102,19 @@ public class Main {
 			instructionList.add(String.format(" %d %3d %s %s", i - 5, address, padRight(mnemonic, 15), machineCode));
 		}
 
+		instructionList.add("----------------------------------------");
 		for (i = 1; i < instructionPredictionCount + 1; i++) {
 			int address;
 			String mnemonic;
 			String machineCode;
+			int tempAddress = nextInstructionAddress.toInt()-2 + i * 2;
 			try {
-				Instruction instruction = (Instruction) storage.get(currentInstructionAddress.toInt() + i * 2);
+				Instruction instruction = (Instruction) storage.get(tempAddress);
 				address = instruction.getAddress().toInt();
 				mnemonic = instruction.getMnemonic();
 				machineCode = instruction.getMachineCode().toBin();
 			} catch (StorageException e) {
-				address = 0;
+				address = tempAddress;
 				mnemonic = "";
 				machineCode = "";
 			}
@@ -130,8 +132,9 @@ public class Main {
 			}
 			storageList.add(String.format("%d %5d (%s)", address, value.toInt(), value.toBin()));
 		}
+		storageList.add("");
 
-		for (i = 0; i < 15; i++) {
+		for (i = 0; i < 16; i++) {
 			System.out.printf(" %s %10s %s%n", padRight(instructionList.get(i), 40), " ", storageList.get(i));
 		}
 	}

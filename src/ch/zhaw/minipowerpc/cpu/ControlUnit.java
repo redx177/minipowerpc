@@ -30,11 +30,7 @@ public class ControlUnit {
 		Instruction instruction = loadInstructionFromStorage(instructionCounter.get());
 		instructionRegister.load(instruction);
 
-		boolean hasNext = perform();
-
-		instructionCounter.increment();
-
-		return hasNext;
+		return perform();
 	}
 
 	private boolean perform() throws InvalidInstructionException, StorageException {
@@ -42,8 +38,9 @@ public class ControlUnit {
 		Binary machineCode = instruction.getMachineCode();
 		String machineCodeBinary = machineCode.toBin();
 
+		String tempMachineCodeBinary = machineCodeBinary.substring(0, 4);
 		// CLR, ADD, AND, OR
-		if (machineCodeBinary.substring(0, 4).equals("0000")) {
+		if (tempMachineCodeBinary.equals("0000")) {
 			String middle = machineCodeBinary.substring(6, 9);
 
 			if (middle.equals("101")) {
@@ -67,7 +64,31 @@ public class ControlUnit {
 			}
 		}
 
-		String tempMachineCodeBinary = machineCodeBinary.substring(0, 8);
+		if (tempMachineCodeBinary.equals("0001")) {
+			String middle = machineCodeBinary.substring(6, 8);
+
+			if (middle.equals("10")) {
+				performBz();
+				return true;
+			}
+
+			if (middle.equals("01")) {
+				performBnz();
+				return true;
+			}
+
+			if (middle.equals("11")) {
+				performBc();
+				return true;
+			}
+
+			if (middle.equals("00")) {
+				performB();
+				return true;
+			}
+		}
+
+		tempMachineCodeBinary = machineCodeBinary.substring(0, 8);
 		if (tempMachineCodeBinary.equals("00000001")) {
 			performInc();
 			return true;
@@ -80,21 +101,25 @@ public class ControlUnit {
 
 		if (tempMachineCodeBinary.equals("00000101")) {
 			alu.Sra();
+			instructionCounter.increment();
 			return true;
 		}
 
 		if (tempMachineCodeBinary.equals("00001000")) {
 			alu.Sla();
+			instructionCounter.increment();
 			return true;
 		}
 
 		if (tempMachineCodeBinary.equals("00001001")) {
 			alu.Srl();
+			instructionCounter.increment();
 			return true;
 		}
 
 		if (tempMachineCodeBinary.equals("00001100")) {
 			alu.Sll();
+			instructionCounter.increment();
 			return true;
 		}
 
@@ -116,6 +141,27 @@ public class ControlUnit {
 
 		if (machineCodeBinary.substring(0, 9).equals("000000001")) {
 			alu.Not();
+			instructionCounter.increment();
+			return true;
+		}
+
+		if (machineCodeBinary.substring(0, 5).equals("00110")) {
+			performBzd();
+			return true;
+		}
+
+		if (machineCodeBinary.substring(0, 5).equals("00101")) {
+			performBnzd();
+			return true;
+		}
+
+		if (machineCodeBinary.substring(0, 5).equals("00111")) {
+			performBcd();
+			return true;
+		}
+
+		if (machineCodeBinary.substring(0, 5).equals("00100")) {
+			performBd();
 			return true;
 		}
 
@@ -132,19 +178,23 @@ public class ControlUnit {
 
 	private void performInc() {
 		alu.Add(new Binary(1));
+		instructionCounter.increment();
 	}
 
 	private void performDec() {
 		alu.Add(new Binary(-1));
+		instructionCounter.increment();
 	}
 
 	private void performClr() throws InvalidInstructionException {
 		getCurrentRegister().set(new Binary("0"));
 		alu.unsetCarry();
+		instructionCounter.increment();
 	}
 
 	private void performAdd() throws InvalidInstructionException {
 		alu.Add(getCurrentRegister().get());
+		instructionCounter.increment();
 	}
 
 	private void performAddd() throws InvalidInstructionException {
@@ -152,29 +202,93 @@ public class ControlUnit {
 		String binary = instruction.getMachineCode().toBin().substring(1);
 		Binary summand = new Binary((isPositive(binary) ? "0" : "1") + binary);
 		alu.Add(summand);
+		instructionCounter.increment();
 	}
 
 	private void performLwdd() throws InvalidInstructionException, StorageException {
 		Register register = getCurrentRegister();
-		Instruction instruction = instructionRegister.getInstruction();
-		Binary address = new Binary(instruction.getMachineCode().toBin().substring(6));
+		Binary address = getCurrentAddress();
 		Binary value = loadBinaryFromStorage(address);
 		register.set(value);
+		instructionCounter.increment();
 	}
 
 	private void performSwdd() throws InvalidInstructionException, StorageException {
 		Register register = getCurrentRegister();
-		Instruction instruction = instructionRegister.getInstruction();
-		Binary address = new Binary(instruction.getMachineCode().toBin().substring(6));
+		Binary address = getCurrentAddress();
 		storage.set(address, register.get());
+		instructionCounter.increment();
 	}
 
 	private void performAnd() throws InvalidInstructionException {
 		alu.And(getCurrentRegister().get());
+		instructionCounter.increment();
 	}
 
 	private void performOr() throws InvalidInstructionException {
 		alu.Or(getCurrentRegister().get());
+		instructionCounter.increment();
+	}
+
+	private void performBz() throws InvalidInstructionException {
+		if (alu.getAccu().get().toInt() == 0) {
+			instructionCounter.jumpTo(getCurrentRegister().get());
+		} else {
+			instructionCounter.increment();
+		}
+	}
+
+	private void performBnz() throws InvalidInstructionException {
+		if (alu.getAccu().get().toInt() != 0) {
+			instructionCounter.jumpTo(getCurrentRegister().get());
+		} else {
+			instructionCounter.increment();
+		}
+	}
+
+	private void performBc() throws InvalidInstructionException {
+		if (alu.getCarry() == 1) {
+			instructionCounter.jumpTo(getCurrentRegister().get());
+		} else {
+			instructionCounter.increment();
+		}
+	}
+
+	private void performB() throws InvalidInstructionException {
+		instructionCounter.jumpTo(getCurrentRegister().get());
+	}
+
+	private void performBzd() {
+		if (alu.getAccu().get().toInt() == 0) {
+			instructionCounter.jumpTo(getCurrentAddress());
+		} else {
+			instructionCounter.increment();
+		}
+	}
+
+	private void performBnzd() throws InvalidInstructionException {
+		if (alu.getAccu().get().toInt() != 0) {
+			instructionCounter.jumpTo(getCurrentAddress());
+		} else {
+			instructionCounter.increment();
+		}
+	}
+
+	private void performBcd() throws InvalidInstructionException {
+		if (alu.getCarry() == 1) {
+			instructionCounter.jumpTo(getCurrentAddress());
+		} else {
+			instructionCounter.increment();
+		}
+	}
+
+	private void performBd() throws InvalidInstructionException {
+		instructionCounter.jumpTo(getCurrentAddress());
+	}
+
+	private Binary getCurrentAddress() {
+		Instruction instruction = instructionRegister.getInstruction();
+		return new Binary(instruction.getMachineCode().toBin().substring(6));
 	}
 
 	private Register getCurrentRegister() throws InvalidInstructionException {
