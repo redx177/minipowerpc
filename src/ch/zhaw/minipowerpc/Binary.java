@@ -4,20 +4,15 @@ import ch.zhaw.minipowerpc.storage.IStorable;
 
 public class Binary implements IStorable {
 	private String binary;
-	private final int integer;
+	private int integer;
 
 	public Binary(String binary) {
 		setBinary(binary);
-		integer = (short)Integer.parseInt(binary, 2);
+		setInteger();
 	}
 
 	public Binary(int integer) {
-		this.integer = integer;
-		String binary = Integer.toBinaryString(integer);
-		if (binary.length() > 16) {
-			binary = binary.substring(binary.length()-16);
-		}
-		setBinary(binary);
+		this(Integer.toBinaryString(integer));
 	}
 
 	public String toBin() {
@@ -33,7 +28,14 @@ public class Binary implements IStorable {
 	}
 
 	private void setBinary(String value) {
+		if (value.length() > 16) {
+			value = value.substring(value.length()-16);
+		}
 		binary = String.format("%16s", value).replace(' ', isPositive(value) ? '0' : '1');
+	}
+
+	private void setInteger() {
+		integer = (short)Integer.parseInt(binary, 2);
 	}
 
 	private boolean isPositive(String value) {

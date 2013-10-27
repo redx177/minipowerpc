@@ -20,6 +20,7 @@ public class Main {
 	//private static final String fileName = "D:\\Git\\minipowerpc\\examples\\CompilerTest.slang";
 	private static final String fileName = "D:\\Git\\minipowerpc\\examples\\MathExample.slang";
 	//private static final String fileName = "D:\\Git\\minipowerpc\\examples\\Serie3.slang";
+	//private static final String fileName = "D:\\Git\\minipowerpc\\examples\\Multiplication.slang";
 	private static final int instructionPredictionCount = 10;
 	private static final int storageDisplayCount = 15;
 	private static final int storageOffset = 500;

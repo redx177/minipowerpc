@@ -15,9 +15,32 @@ public class Alu {
 	}
 
 	public void Add(Binary summand) {
-		int summand1 = accu.get().toInt();
-		int summand2 = summand.toInt();
-		accu.set(new Binary(summand1+summand2));
+		Binary summand1 = accu.get();
+		int summand1Int = summand1.toInt();
+		String summand1Bin = summand1.toBin();
+		int summand2Int = summand.toInt();
+
+		// Result
+		int total = summand1Int + summand2Int;
+
+		// Carry/Overflow
+		if (total > 32767 || total < -32768) {
+			carry = 1;
+		}
+
+		/*
+		String totalBinary = Integer.toBinaryString(total);
+		if (totalBinary.length() > 16) {
+			carry = 1;
+		} else {
+			String signExtension = summand1Bin.substring(0, 1);
+			if (signExtension.equals(summand.toBin().substring(0, 1)) &&
+					!signExtension.equals(totalBinary.substring(0, 1))) {
+				carry = 1;
+			}
+		}*/
+
+		accu.set(new Binary(total));
 	}
 
 	public int getCarry() {
@@ -38,7 +61,7 @@ public class Alu {
 
 	public void Sla() {
 		String binary = accu.get().toBin();
-		carry = binary.substring(1,2).equals("1") ? 1 : 0;
+		carry = binary.substring(1, 2).equals("1") ? 1 : 0;
 
 		accu.set(new Binary(String.format("%s%s0", binary.substring(0, 1), binary.substring(2))));
 	}
@@ -53,7 +76,7 @@ public class Alu {
 
 	public void Sll() {
 		String binary = accu.get().toBin();
-		carry = binary.substring(0,1).equals("1") ? 1 : 0;
+		carry = binary.substring(0, 1).equals("1") ? 1 : 0;
 
 		accu.set(new Binary(binary.substring(1) + "0"));
 	}
