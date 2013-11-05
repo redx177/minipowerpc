@@ -28,18 +28,6 @@ public class Alu {
 			carry = 1;
 		}
 
-		/*
-		String totalBinary = Integer.toBinaryString(total);
-		if (totalBinary.length() > 16) {
-			carry = 1;
-		} else {
-			String signExtension = summand1Bin.substring(0, 1);
-			if (signExtension.equals(summand.toBin().substring(0, 1)) &&
-					!signExtension.equals(totalBinary.substring(0, 1))) {
-				carry = 1;
-			}
-		}*/
-
 		accu.set(new Binary(total));
 	}
 

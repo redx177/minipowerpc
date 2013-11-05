@@ -18,9 +18,9 @@ import java.util.Scanner;
 public class Main {
 
 	//private static final String fileName = "D:\\Git\\minipowerpc\\examples\\CompilerTest.slang";
-	private static final String fileName = "D:\\Git\\minipowerpc\\examples\\MathExample.slang";
+	//private static final String fileName = "D:\\Git\\minipowerpc\\examples\\MathExample.slang";
 	//private static final String fileName = "D:\\Git\\minipowerpc\\examples\\Serie3.slang";
-	//private static final String fileName = "D:\\Git\\minipowerpc\\examples\\Multiplication.slang";
+	private static final String fileName = "D:\\Git\\minipowerpc\\examples\\Multiplication.slang";
 	private static final int instructionPredictionCount = 10;
 	private static final int storageDisplayCount = 15;
 	private static final int storageOffset = 500;
@@ -60,13 +60,6 @@ public class Main {
 		System.out.printf("Select mode [f]ast, [s]low, s[t]ep: ");
 
 		char mode = new Scanner(System.in).next().charAt(0);
-		/*
-		char mode;
-		try {
-			mode = (char) System.in.read();
-		} catch (IOException e) {
-			return defaultMode;
-		}*/
 
 		if (mode == 'f' || mode == 's' || mode == 't') {
 			return mode;
@@ -99,7 +92,7 @@ public class Main {
 
 			cycleCount++;
 
-			waitIfRequired(mode);
+			mode = waitIfRequired(mode);
 		}
 		if (mode == 'f') {
 
@@ -121,17 +114,12 @@ public class Main {
 		}
 	}
 
-	private static void waitIfRequired(char mode) {
+	private static char waitIfRequired(char mode) {
 		if (mode == 't') {
-			new Scanner(System.in).nextLine();
-			/*
-			try {
-				System.in.read();
-				return;
-			} catch (IOException e) {
-				e.printStackTrace();
+			String newMode = new Scanner(System.in).nextLine();
+			if (newMode.equals("f") || newMode.equals("s")) {
+				return newMode.charAt(0);
 			}
-			*/
 		}
 		if (mode == 's') {
 			try {
@@ -140,6 +128,7 @@ public class Main {
 				e.printStackTrace();
 			}
 		}
+		return mode;
 	}
 
 	private static void printInstructionsAndStorage(Storage storage, Binary nextInstructionAddress,
@@ -197,7 +186,7 @@ public class Main {
 			} catch (StorageException e) {
 				value = new Binary(0);
 			}
-			storageList.add(String.format("%d %5d (%s)",
+			storageList.add(String.format("%d %6d (%s)",
 					address,
 					value.toInt(),
 					(value.toInt() == 0 ? 0 : value.toBin())));
@@ -223,10 +212,10 @@ public class Main {
 				reg1.toInt(), padRight("(" + reg1.toBin() + ")", 18),
 				controlUnit.getInstructionCounter().get().toInt(),
 				" ");
-		System.out.printf("║  - MachineCode: %s │ REG2: %6d %s │ Durchgeführte Befehle: %3d  ║%n",
+		System.out.printf("║  - MachineCode: %s │ REG2: %6d %s │ Anzahl Befehle: %s ║%n",
 				instruction.getMachineCode().toBin(),
 				reg2.toInt(), padRight("(" + reg2.toBin() + ")", 18),
-				cycleCount);
+				padRight(Integer.toString(cycleCount), 11));
 		System.out.printf("║  - Mnemonic: %s│ REG3: %6d %s │ %27s ║%n",
 				padRight(instruction.getMnemonic(), 20),
 				reg3.toInt(), padRight("(" + reg3.toBin() + ")", 18),
